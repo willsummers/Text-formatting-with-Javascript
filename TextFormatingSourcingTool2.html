@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text Transformer</title>
+    <style>
+        body {
+            font-family: Calibri, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        textarea {
+            width: 100%;
+            height: 150px;
+            margin-bottom: 10px;
+            font-family: inherit;
+        }
+        #output {
+            white-space: pre-wrap;
+            border: 1px solid #ccc;
+            padding: 10px;
+            background-color: #f9f9f9;
+            font-family: inherit;
+            margin-bottom: 10px;
+        }
+        .missing {
+            color: red;
+            font-style: italic;
+        }
+        #copyButton {
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>Text Transformer</h1>
+    <textarea id="input" placeholder="Paste your text here..."></textarea>
+    <h2>Transformed Text:</h2>
+    <div id="output"></div>
+    <button id="copyButton">Copy</button>
+
+    <script>
+        function transformText() {
+            const input = document.getElementById('input').value;
+            const lines = input.split('\n');
+            let author = '';
+            let title = '';
+            let fileNumber = '';
+            let url = '';
+
+            // Check for URL at the beginning or end
+            const urlRegex = /https?:\/\/[^\s]+/;
+            if (urlRegex.test(lines[0])) {
+                url = lines.shift().trim();
+            } else if (urlRegex.test(lines[lines.length - 1])) {
+                url = lines.pop().trim();
+            }
+
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (line.startsWith('File #:')) {
+                    fileNumber = line.split(':')[1].trim();
+                    if (i + 1 < lines.length) {
+                        title = lines[i + 1].trim();
+                    }
+                } else if (line.startsWith('By')) {
+                    author = line.substring(2).trim();
+                    if (i - 1 >= 0 && !title) {
+                        title = lines[i - 1].trim();
+                    }
+                }
+            }
+
+            const currentDate = new Date().toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase();
+            const currentYear = new Date().toLocaleDateString('en-US', { year: 'numeric' }).toUpperCase();
+
+            let transformed = '';
+            transformed += `<b>Source Type:</b> Website; <b>Publication/Site Name:</b> Adobe; `
+            transformed += `<b>Author:</b> ${author || '<span class="missing">missing</span>'}; `;
+            transformed += `<b>Title:</b> ${title || '<span class="missing">missing</span>'}; `;
+            transformed += `<b>Publication Date:</b> UNK; <b>Page Number:</b> N/A; `
+            transformed += `<b>URL:</b> ${url || '<span class="missing">missing</span>'}; `;
+            transformed += `<b>Data Information Accessed:</b> ${currentDate}; `;
+            transformed += `<b>Source ID:</b> ${fileNumber || '<span class="missing">missing</span>'}; `;
+            transformed += `<b>Source Descriptor/Disclaimer:</b> Media Repository; <b>Source Copyright:</b> ${currentYear} Adobe, All rights reserved; use in accordance with license agreement.`;
+
+            document.getElementById('output').innerHTML = transformed;
+        }
+
+        function copyToClipboard() {
+            const output = document.getElementById('output');
+            const range = document.createRange();
+            range.selectNode(output);
+            window.getSelection().removeAllRanges();
+            window.getSelection().addRange(range);
+            
+            try {
+                document.execCommand('copy');
+                //alert('Transformed text copied to clipboard with formatting!');
+            } catch(err) {
+                console.error('Failed to copy text: ', err);
+                alert('Failed to copy text. Please try again.');
+            }
+            
+            window.getSelection().removeAllRanges();
+        }
+
+        // Add event listeners
+        document.getElementById('input').addEventListener('input', transformText);
+        document.getElementById('copyButton').addEventListener('click', copyToClipboard);
+    </script>
+</body>
+</html>
